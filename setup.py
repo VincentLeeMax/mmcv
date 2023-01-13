@@ -2,6 +2,7 @@ import glob
 import os
 import platform
 import re
+import subprocess
 import warnings
 from pkg_resources import DistributionNotFound, get_distribution
 from setuptools import find_packages, setup
@@ -244,6 +245,10 @@ def get_extensions():
             import psutil
             num_cpu = len(psutil.Process().cpu_affinity())
             cpu_use = max(4, num_cpu - 1)
+            if os.path.exists('/.dockerenv'):
+                exit_code, cpu_use_ns = subprocess.getstatusoutput('cat /sys/fs/cgroup/cpu/cpu.cfs_quota_us')
+                if exit_code == 0 and cpu_use_ns != '-1':
+                    cpu_use = int(int(cpu_use_ns) / 100000 - 1)
         except (ModuleNotFoundError, AttributeError):
             cpu_use = 4
 
